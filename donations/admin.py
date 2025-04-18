@@ -19,14 +19,14 @@ class CollectAdmin(admin.ModelAdmin):
         'owner__email'
     )
 
-    # def get_queryset(self, request):
-    #     queryset = super().get_queryset(request)
-    #     queryset = queryset.annotate(participants=Count('payments'))
-    #     return queryset
-    #
-    # @admin.decorators.display(description='Участников')
-    # def in_favorites_count(self, obj):
-    #     return obj.participants
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(participants=Count('payments'))
+        return queryset
+
+    @admin.decorators.display(description='Участников')
+    def in_favorites_count(self, obj):
+        return obj.participants
 
 
 @admin.register(Payment)

@@ -63,6 +63,7 @@ class Collect(models.Model):
 
 
 class Payment(models.Model):
+    """Модель пожертвования."""
     collect = models.ForeignKey(
         Collect,
         on_delete=models.CASCADE,
