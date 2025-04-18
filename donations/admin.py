@@ -34,8 +34,8 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display = (
         'payment_date',
         'total',
-        'payer__username',
-        'collect__title'
+        'payer',
+        'collect'
     )
     search_fields = (
         'payer',
