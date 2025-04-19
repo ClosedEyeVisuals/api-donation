@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -33,11 +34,8 @@ class Collect(models.Model):
         null=True
     )
     goal_value = models.PositiveIntegerField(
-        'Сумма сбора'
-    )
-    current_value = models.IntegerField(
-        'Собрано средств',
-        default=0
+        'Сумма сбора',
+        validators=[MinValueValidator(1)]
     )
     image = models.ImageField(
         'Обложка',
@@ -61,6 +59,15 @@ class Collect(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if not self.pk:
+            self.owner.email_user(
+                subject=f'{self.reason} состоится!',
+                message=f'{self.owner.get_full_name()}, сбор средств начался!'
+            )
+        return super().save(force_insert, force_update, using, update_fields)
+
 
 class Payment(models.Model):
     """Модель пожертвования."""
@@ -74,7 +81,8 @@ class Payment(models.Model):
         auto_now_add=True
     )
     total = models.PositiveIntegerField(
-        'Сумма пожертвования'
+        'Сумма пожертвования',
+        validators=[MinValueValidator(1)]
     )
     payer = models.ForeignKey(
         User,
@@ -89,4 +97,12 @@ class Payment(models.Model):
         default_related_name = 'payments'
 
     def __str__(self):
-        return f'{self.payment_date} - {self.total}'
+        return f'{self.collect.title} - {self.total} руб.'
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.payer.email_user(
+            subject='Благодарность!',
+            message=f'{self.payer.get_full_name()}, спасибо за поддержку!'
+        )
+        return super().save(force_insert, force_update, using, update_fields)
