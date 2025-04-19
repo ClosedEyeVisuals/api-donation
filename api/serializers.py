@@ -17,8 +17,21 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name'
         )
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True}
         }
+
+    def validate(self, data):
+        if (
+                data['email'] == ''
+                or data['first_name'] == ''
+                or data['last_name'] == ''
+        ):
+            raise serializers.ValidationError('Заполните все данные!')
+
+        return data
 
     def create(self, validated_data):
         pw = validated_data.get('password')
@@ -29,6 +42,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CollectSerializer(serializers.ModelSerializer):
+    owner = UserSerializer(read_only=True)
+
     class Meta:
         model = Collect
         fields = (
@@ -37,6 +52,25 @@ class CollectSerializer(serializers.ModelSerializer):
             'reason',
             'description',
             'goal_value',
+            'current_value',
             'image',
+            'created_at',
             'finish_at'
         )
+        read_only_fields = (
+            'current_value',
+            'created_at'
+        )
+
+    def create(self, validated_data):
+        owner = self.context['request'].user
+        collect = Collect.objects.create(
+            **validated_data,
+            owner=owner
+        )
+        owner.email_user(
+            subject=f'{validated_data["title"]} состоится!',
+            message=f'{owner.get_full_name()} сбор средств начался!',
+        )
+        return collect
+
