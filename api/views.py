@@ -3,7 +3,8 @@ from django.db.models import Count, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin)
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from api.permissions import IsOwnerOrReadOnly
@@ -30,10 +31,9 @@ class CollectViewSet(ModelViewSet):
                                         collected=Sum('payments__total'))
 
 
-class PaymentViewSet(CreateModelMixin, ListModelMixin,
-                     RetrieveModelMixin, GenericViewSet):
+class PaymentViewSet(CreateModelMixin, GenericViewSet):
     serializer_class = PaymentSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get_collect(self):
         return get_object_or_404(

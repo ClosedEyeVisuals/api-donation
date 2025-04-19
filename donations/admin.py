@@ -52,6 +52,6 @@ class PaymentAdmin(admin.ModelAdmin):
 
     )
     search_fields = (
-        'payer',
-        'collect'
+        'payer__username',
+        'collect__title'
     )
