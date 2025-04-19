@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.utils import timezone as tz
 from rest_framework import serializers
 
+from api.fields import Base64ImageField
 from donations.models import Collect, Payment
 
 User = get_user_model()
@@ -41,8 +43,24 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+    payer = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Payment
+        fields = (
+            'total',
+            'payment_date',
+            'payer'
+        )
+
+
 class CollectSerializer(serializers.ModelSerializer):
     owner = UserSerializer(read_only=True)
+    participants = serializers.IntegerField(default=0, read_only=True)
+    collected = serializers.IntegerField(default=0, read_only=True)
+    payments = PaymentSerializer(many=True, read_only=True)
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Collect
@@ -52,25 +70,24 @@ class CollectSerializer(serializers.ModelSerializer):
             'reason',
             'description',
             'goal_value',
-            'current_value',
+            'collected',
+            'participants',
             'image',
             'created_at',
-            'finish_at'
+            'finish_at',
+            'payments'
         )
-        read_only_fields = (
-            'current_value',
-            'created_at'
-        )
+
+    def validate_finish_at(self, value):
+        if value < tz.now():
+            raise serializers.ValidationError(
+                'Нельзя устанавливать дату в прошлом!'
+            )
+        return value
 
     def create(self, validated_data):
-        owner = self.context['request'].user
         collect = Collect.objects.create(
             **validated_data,
-            owner=owner
-        )
-        owner.email_user(
-            subject=f'{validated_data["title"]} состоится!',
-            message=f'{owner.get_full_name()} сбор средств начался!',
+            owner=self.context['request'].user
         )
         return collect
-
