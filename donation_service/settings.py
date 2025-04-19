@@ -1,9 +1,16 @@
+from os import getenv
 from pathlib import Path
 
+from django.core.management.utils import get_random_secret_key
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure-60xbht&hc#9o&p$bwt#7$ujpjlgt-4#05feao_4)o)ikkjao_x'
-DEBUG = True
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+SECRET_KEY = getenv('SECRET_KEY', get_random_secret_key())
+DEBUG = getenv('DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = getenv('ALLOWED_HOSTS', '127.0.0.1').split(', ')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -101,9 +108,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATIC_ROOT = BASE_DIR / 'static'
 
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -123,4 +128,3 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication'
     ]
 }
-
