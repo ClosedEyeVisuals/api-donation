@@ -1,5 +1,8 @@
+from contextlib import suppress
+
 from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
+from django.db.utils import IntegrityError
 from django.utils.timezone import get_current_timezone as get_cur_tz
 from faker import Faker
 
@@ -12,7 +15,7 @@ fake = Faker('ru_RU')
 class Command(BaseCommand):
     """Скрипт для наполнения БД тестовыми данными."""
     def handle(self, *args, **options):
-        for _ in range(100):
+        for _ in range(1001):
             user_data = {
                 'username': fake.user_name(),
                 'password': fake.password(),
@@ -20,9 +23,9 @@ class Command(BaseCommand):
                 'first_name': fake.first_name(),
                 'last_name': fake.last_name()
             }
-            user, created = User.objects.get_or_create(**user_data)
-            if created:
-                user.save()
+            with suppress(IntegrityError):
+                User.objects.create(**user_data)
+
             collect_data = {
                 'owner': User.objects.order_by('?').first(),
                 'title': fake.text(20),
